@@ -42,6 +42,8 @@ export class Hud {
   private readonly gmPanelEl = document.getElementById("gm-panel")!;
   private readonly gmHeadEl = document.getElementById("gm-head")!;
   private readonly gmToggleBtn = document.getElementById("gm-toggle") as HTMLButtonElement;
+  private readonly howToEl = document.getElementById("how-to")!;
+  private readonly howToHeadEl = document.getElementById("how-to-head")!;
   private readonly gameOverEl = document.getElementById("game-over")!;
   private readonly gameOverTextEl = document.getElementById("game-over-text")!;
   private readonly restartBtn = document.getElementById("btn-restart") as HTMLButtonElement;
@@ -56,6 +58,7 @@ export class Hud {
     this.restartBtn.addEventListener("click", () => this.handlers.onRestart());
 
     this.buildGmPanel();
+    this.buildHowTo();
 
     this.refreshMantou();
     this.setAhDou(game.ahDouHp, game.ahDouMaxHp);
@@ -187,6 +190,17 @@ export class Hud {
     });
 
     this.makeDraggable(this.gmPanelEl, this.gmHeadEl);
+  }
+
+  /**
+   * 玩法说明：点击标题栏展开/收起。
+   * 窄屏（手机）默认收起，避免与左右两侧面板 / 棋盘重叠；桌面默认展开。
+   */
+  private buildHowTo(): void {
+    if (window.innerWidth < 900) this.howToEl.classList.add("collapsed");
+    this.howToHeadEl.addEventListener("click", () =>
+      this.howToEl.classList.toggle("collapsed")
+    );
   }
 
   /**

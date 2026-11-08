@@ -87,10 +87,30 @@
       #wave-box b, #mantou-box b { color: var(--gold); font-size: 20px; }
       #btn-summon { white-space: nowrap; flex-shrink: 0; }
 
+      /* ===== 顶部中央：玩法说明（可折叠）+ 状态条 ===== */
+      #top-center {
+        position: fixed; left: 50%; top: calc(82px + env(safe-area-inset-top));
+        transform: translateX(-50%); z-index: 16;
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        max-width: min(640px, 94vw); pointer-events: none;
+      }
+      #how-to { pointer-events: auto; padding: 6px 12px; max-width: 100%; }
+      #how-to-head {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        font-size: 15px; font-weight: 700; color: var(--gold); letter-spacing: 1px;
+        cursor: pointer; user-select: none; touch-action: manipulation;
+      }
+      #how-to-head .arrow { font-size: 12px; line-height: 1; transition: transform .15s; }
+      #how-to.collapsed #how-to-head .arrow { transform: rotate(-90deg); }
+      #how-to-text {
+        font-size: 14px; line-height: 1.65; color: var(--ink-soft); text-align: center;
+        padding-top: 6px; margin-top: 6px; border-top: 1px dashed rgba(90, 74, 48, 0.4);
+      }
+      #how-to.collapsed #how-to-text { display: none; }
+
       /* ===== 状态条 ===== */
       #hud-status {
-        position: fixed; left: 50%; top: 82px; transform: translateX(-50%);
-        z-index: 10; padding: 4px 16px; border-radius: 4px; pointer-events: none;
+        padding: 4px 16px; border-radius: 4px; pointer-events: none;
         font: 600 15px/1.4 "STKaiti", "KaiTi", serif; color: #ffe9a8;
         background: rgba(28, 22, 14, 0.6); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
       }
@@ -208,7 +228,11 @@
         #wave-box, #mantou-box { font-size: 13px; }
         #wave-box b, #mantou-box b { font-size: 15px; }
 
-        #hud-status { top: calc(60px + env(safe-area-inset-top)); font-size: 13px; padding: 3px 10px; }
+        #top-center { top: calc(62px + env(safe-area-inset-top)); max-width: 94vw; }
+        #how-to { padding: 4px 10px; }
+        #how-to-head { font-size: 13px; }
+        #how-to-text { font-size: 12px; line-height: 1.55; }
+        #hud-status { font-size: 13px; padding: 3px 10px; }
 
         /* 武将面板收窄，避免遮挡棋盘 */
         #general-panel {
@@ -244,7 +268,7 @@
       /* 横屏手机（高度很矮）：进一步压缩顶栏 */
       @media (max-height: 460px) {
         #top-bar { height: 40px; }
-        #hud-status { top: calc(50px + env(safe-area-inset-top)); }
+        #top-center { top: calc(54px + env(safe-area-inset-top)); }
         #general-panel { top: calc(52px + env(safe-area-inset-top)); max-height: 46vh; overflow-y: auto; }
         #game-over-text { font-size: 32px; }
       }
@@ -262,7 +286,18 @@
       <div id="mantou-box">馒头 <b id="hud-mantou">50</b></div>
     </div>
 
-    <div id="hud-status"></div>
+    <div id="top-center">
+      <div id="how-to" class="ink-panel">
+        <div id="how-to-head"><span class="arrow">▾</span><span>玩法说明</span></div>
+        <div id="how-to-text">
+          ① 点「召唤」花馒头随机获得物品，拖到棋盘上放置<br />
+          ② 两个同名同级单位叠在一起即可升级（最高 5 级）<br />
+          ③ 武将文字按顺序连成横排或竖排，即可激活该武将<br />
+          ④ 别让怪物走到最右侧的阿斗身边，清完 10 波即获胜
+        </div>
+      </div>
+      <div id="hud-status"></div>
+    </div>
 
     <div id="general-panel" class="ink-panel">
       <h3>武将收集</h3>
