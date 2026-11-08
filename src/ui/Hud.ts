@@ -39,6 +39,8 @@ export class Hud {
   private readonly summonBtn = document.getElementById("btn-summon") as HTMLButtonElement;
   private readonly generalListEl = document.getElementById("general-list")!;
   private readonly gmBodyEl = document.getElementById("gm-body")!;
+  private readonly gmPanelEl = document.getElementById("gm-panel")!;
+  private readonly gmHeadEl = document.getElementById("gm-head")!;
   private readonly gmToggleBtn = document.getElementById("gm-toggle") as HTMLButtonElement;
   private readonly gameOverEl = document.getElementById("game-over")!;
   private readonly gameOverTextEl = document.getElementById("game-over-text")!;
@@ -183,5 +185,58 @@ export class Hud {
       const collapsed = this.gmBodyEl.classList.toggle("collapsed");
       this.gmToggleBtn.textContent = collapsed ? "展开" : "收起";
     });
+
+    this.makeDraggable(this.gmPanelEl, this.gmHeadEl);
+  }
+
+  /**
+   * 让 GM 面板可通过标题栏拖拽移动（鼠标 / 触摸通用）。
+   * 拖动时把定位从 CSS 的 left/top 固定下来，避免与后续计算叠加；
+   * 并把面板限制在视口内，防止拖出屏幕找不回来。
+   */
+  private makeDraggable(panel: HTMLElement, handle: HTMLElement): void {
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    const onDown = (e: PointerEvent): void => {
+      // 标题栏里的按钮（收起/展开）保持正常点击，不触发拖拽
+      if ((e.target as HTMLElement).closest("button")) return;
+      const rect = panel.getBoundingClientRect();
+      panel.style.left = `${rect.left}px`;
+      panel.style.top = `${rect.top}px`;
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = rect.left;
+      startTop = rect.top;
+      dragging = true;
+      handle.classList.add("dragging");
+      handle.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    };
+
+    const onMove = (e: PointerEvent): void => {
+      if (!dragging) return;
+      const maxX = Math.max(0, window.innerWidth - panel.offsetWidth);
+      const maxY = Math.max(0, window.innerHeight - panel.offsetHeight);
+      const x = Math.min(Math.max(0, startLeft + (e.clientX - startX)), maxX);
+      const y = Math.min(Math.max(0, startTop + (e.clientY - startY)), maxY);
+      panel.style.left = `${x}px`;
+      panel.style.top = `${y}px`;
+    };
+
+    const onUp = (e: PointerEvent): void => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove("dragging");
+      handle.releasePointerCapture?.(e.pointerId);
+    };
+
+    handle.addEventListener("pointerdown", onDown);
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onUp);
+    handle.addEventListener("pointercancel", onUp);
   }
 }

@@ -161,10 +161,15 @@
 
       /* ===== GM 面板 ===== */
       #gm-panel {
-        position: fixed; left: 14px; bottom: 16px; z-index: 15;
+        position: fixed; left: 14px; top: 82px; z-index: 15;
         width: 210px; padding: 8px; user-select: none; opacity: 0.94;
       }
-      #gm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+      /* 标题栏即拖拽把手：按住可拖动整个面板 */
+      #gm-head {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+        cursor: grab; touch-action: none;
+      }
+      #gm-head.dragging { cursor: grabbing; }
       #gm-head span { font-size: 15px; font-weight: 700; color: var(--seal); letter-spacing: 1px; }
       #gm-toggle { font-size: 12px; padding: 3px 8px; }
       #gm-body { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -228,10 +233,9 @@
           bottom: calc(78px + env(safe-area-inset-bottom));
         }
 
-        /* GM 面板移到左侧中部并默认收起，避让底部召唤栏 */
+        /* GM 面板：左上角、血条下方（可拖拽移动到任意位置） */
         #gm-panel {
-          top: 50%; left: 6px; bottom: auto;
-          transform: translateY(-50%) scale(0.92); transform-origin: left center;
+          top: calc(64px + env(safe-area-inset-top)); left: 6px;
           width: 150px; padding: 6px;
         }
         #gm-head span { font-size: 13px; }
