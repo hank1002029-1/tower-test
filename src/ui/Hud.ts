@@ -11,6 +11,8 @@ import { rgbToCss } from "../config/colors";
 
 export interface HudHandlers {
   onSummon: () => void;
+  /** 点击「开始迎战」：正式开局，第一波怪物出动。 */
+  onStart: () => void;
   onSlotDragStart: (item: SummonItem, el: HTMLElement, ev: PointerEvent) => void;
   onRestart: () => void;
   /** GM：一键解锁全部未开启格。 */
@@ -37,6 +39,7 @@ export class Hud {
   private readonly statusEl = document.getElementById("hud-status")!;
   private readonly barEl = document.getElementById("summon-bar")!;
   private readonly summonBtn = document.getElementById("btn-summon") as HTMLButtonElement;
+  private readonly startBtn = document.getElementById("btn-start") as HTMLButtonElement;
   private readonly generalListEl = document.getElementById("general-list")!;
   private readonly gmBodyEl = document.getElementById("gm-body")!;
   private readonly gmPanelEl = document.getElementById("gm-panel")!;
@@ -56,6 +59,7 @@ export class Hud {
 
   constructor(private readonly game: GameState, private readonly handlers: HudHandlers) {
     this.summonBtn.addEventListener("click", () => this.handlers.onSummon());
+    this.startBtn.addEventListener("click", () => this.handlers.onStart());
     this.restartBtn.addEventListener("click", () => this.handlers.onRestart());
 
     this.buildGmPanel();
@@ -109,6 +113,12 @@ export class Hud {
     this.gameOverTextEl.textContent = win ? "胜利！阿斗保住了！" : "兵败...阿斗被掳走了";
     this.gameOverTextEl.style.color = win ? "#6bbf5a" : "#d94033";
     this.gameOverEl.classList.add("show");
+    this.hideStart();
+  }
+
+  /** 开局后隐藏「开始迎战」按钮。 */
+  hideStart(): void {
+    this.startBtn.classList.add("hidden");
   }
 
   /** 刷新武将收集面板（名字 + 已摆字数 + 激活等级）。 */

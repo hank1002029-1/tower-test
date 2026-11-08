@@ -64,6 +64,23 @@
         border-color: var(--paper-edge);
       }
 
+      /* 开始迎战：金色主按钮，点击后隐藏并立刻放出第一波 */
+      #btn-start {
+        font-family: inherit; font-size: 19px; font-weight: 700; letter-spacing: 4px;
+        color: #2f1c04; text-indent: 4px;
+        background: linear-gradient(#f2d271, #d6a63a);
+        border: 1px solid #8a6a1e; border-radius: 6px;
+        padding: 9px 30px; cursor: pointer;
+        box-shadow: 0 0 0 3px rgba(255, 245, 208, 0.35), 0 3px 14px rgba(0, 0, 0, 0.5);
+        animation: start-pulse 1.6s ease-in-out infinite;
+      }
+      #btn-start:hover { filter: brightness(1.06); }
+      #btn-start.hidden { display: none; }
+      @keyframes start-pulse {
+        0%, 100% { box-shadow: 0 0 0 3px rgba(255, 245, 208, 0.35), 0 3px 14px rgba(0, 0, 0, 0.5); }
+        50% { box-shadow: 0 0 0 8px rgba(255, 220, 120, 0.22), 0 3px 18px rgba(0, 0, 0, 0.55); }
+      }
+
       /* ===== 顶栏 ===== */
       #top-bar {
         position: fixed; left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%);
@@ -233,6 +250,7 @@
         #wave-box b, #mantou-box b { font-size: 15px; }
 
         #top-center { top: calc(62px + env(safe-area-inset-top)); max-width: 94vw; }
+        #btn-start { font-size: 16px; padding: 7px 20px; letter-spacing: 2px; }
         #how-to { padding: 4px 10px; }
         #how-to-head { font-size: 13px; }
         #how-to-text { font-size: 12px; line-height: 1.55; }
@@ -294,10 +312,11 @@
       <div id="how-to" class="ink-panel">
         <div id="how-to-head"><span class="arrow">▾</span><span>玩法说明</span></div>
         <div id="how-to-text">
-          ① 点「召唤」花馒头随机获得物品，拖到棋盘上放置<br />
+          ① 先点「召唤」花馒头随机获得物品，拖到棋盘上布阵<br />
           ② 两个同名同级单位叠在一起即可升级（最高 5 级）<br />
           ③ 武将文字按顺序连成横排或竖排，即可激活该武将<br />
-          ④ 别让怪物走到最右侧的阿斗身边，清完 10 波即获胜
+          ④ 布阵满意后点「开始迎战」，怪物才会出动<br />
+          ⑤ 别让怪物走到最右侧的阿斗身边，清完 10 波即获胜
         </div>
       </div>
       <div id="hud-status"></div>
@@ -311,6 +330,7 @@
     <div id="controls">
       <div id="summon-bar" class="ink-panel"></div>
       <button id="btn-summon" class="ink-btn">召唤（<span id="hud-cost">10</span>）馒头</button>
+      <button id="btn-start">开始迎战</button>
     </div>
 
     <div id="trash-bin">垃圾桶</div>

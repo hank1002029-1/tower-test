@@ -78,6 +78,8 @@ export class GameApp {
   private selectedItem: SummonItem | null = null;
   /** 波次自动启动计时（对应 Unity WaveStarter）。 */
   private waveTimer = 0;
+  /** 是否已点「开始迎战」：未开始前不派出任何怪物，玩家可安心布阵。 */
+  private started = false;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -117,6 +119,7 @@ export class GameApp {
     this.input = new BoardInput(this.canvas, this.camera, this.coords, this.board, this.scene);
     this.hud = new Hud(this.game, {
       onSummon: () => this.onSummon(),
+      onStart: () => this.onStart(),
       onSlotDragStart: (item, el, ev) => {
         ev.preventDefault();
         this.input.beginPlaceDrag(item, el, ev);
@@ -162,6 +165,7 @@ export class GameApp {
 
   /** GM：立即开始下一波（跳过 8s 等待）。 */
   gmStartWave(): void {
+    this.markStarted();
     if (this.monsters.startNextWave()) {
       this.waveTimer = 0;
       console.log("[GM] 立即开始一波");
@@ -304,6 +308,7 @@ export class GameApp {
 
   /** 波次自动启动：非战斗期累积计时，满 8s 开始下一波（对应 Unity WaveStarter）。 */
   private updateWaveStarter(dt: number): void {
+    if (!this.started) return;
     if (this.game.phase !== GamePhase.Playing) return;
     if (this.monsters.waveActive) return;
     this.waveTimer += dt;
@@ -325,6 +330,21 @@ export class GameApp {
   /** 再战一场：对应 Unity UIManager.OnRestart 的整场重载（Web 端直接刷新页面）。 */
   private onRestart(): void {
     location.reload();
+  }
+
+  /** 点击「开始迎战」：正式开局并立刻派出第一波（玩家可先布阵），之后的波次沿用自动计时。 */
+  private onStart(): void {
+    if (this.started) return;
+    this.markStarted();
+    this.monsters.startNextWave();
+    console.log("[M11] 开始迎战：第一波出动");
+  }
+
+  /** 标记已开局并隐藏开始按钮（手动开始与 GM 立即出怪共用）。 */
+  private markStarted(): void {
+    if (this.started) return;
+    this.started = true;
+    this.hud.hideStart();
   }
 
   private onSummon(): void {
