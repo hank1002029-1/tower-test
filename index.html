@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#1a1712" />
+    <title>赵云与阿斗 · H5 M10</title>
+    <style>
+      :root {
+        --ink: #2b2620;
+        --ink-soft: #5a5040;
+        --paper: #efe6d0;
+        --paper-edge: rgba(58, 46, 30, 0.6);
+        --seal: #a83226;
+        --gold: #8a6a1e;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%; height: 100%; overflow: hidden; background: #1a1712;
+        overscroll-behavior: none; -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+      }
+      /* touch-action:none：触摸拖动棋盘单位时阻止页面滚动/缩放 */
+      #app { width: 100%; height: 100%; display: block; touch-action: none; }
+
+      /* 水墨面板：宣纸底纹 + 墨色边框 + 楷体 */
+      .ink-panel {
+        font-family: "STKaiti", "KaiTi", "Kaiti SC", "Songti SC", "SimSun", serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.55), transparent 62%),
+          linear-gradient(160deg, #f4ecd9 0%, #e7dabf 100%);
+        border: 2px solid var(--paper-edge);
+        border-radius: 6px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+      }
+
+      /* 印章式红章 */
+      .seal {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border-radius: 5px;
+        background: var(--seal); color: #f7ecd8;
+        font: 700 13px/1.05 "STKaiti", "KaiTi", serif; letter-spacing: 1px;
+        box-shadow: inset 0 0 0 2px rgba(247, 236, 216, 0.55);
+        text-align: center;
+      }
+
+      .ink-btn {
+        font-family: inherit; font-size: 15px; font-weight: 700; color: #f6ecd6;
+        background: linear-gradient(#8c2a20, #6d1e17);
+        border: 1px solid #4a120d; border-radius: 5px;
+        padding: 7px 14px; cursor: pointer;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      }
+      .ink-btn:hover { filter: brightness(1.1); }
+      .ink-btn:disabled { filter: grayscale(0.7) brightness(0.7); cursor: not-allowed; }
+      .ink-btn.ghost {
+        color: var(--ink); background: linear-gradient(#f1e7d0, #ddcfae);
+        border-color: var(--paper-edge);
+      }
+
+      /* ===== 顶栏 ===== */
+      #top-bar {
+        position: fixed; left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%);
+        z-index: 10; width: min(1200px, 96vw); height: 62px;
+        display: flex; align-items: center; gap: 16px; padding: 0 14px;
+      }
+      #hp-bar {
+        display: flex; align-items: center; gap: 1px; height: 40px;
+        flex-wrap: wrap; overflow: hidden; max-width: 42vw;
+      }
+      #hp-bar .heart { font-size: 16px; line-height: 1; color: var(--seal); text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+      #hp-bar .heart.lost { color: #b9ae97; text-shadow: none; }
+      #hp-label { font-size: 15px; color: var(--ink-soft); margin-left: 4px; white-space: nowrap; }
+      #title {
+        font-size: 24px; font-weight: 700; color: var(--ink); letter-spacing: 3px;
+        padding-left: 4px; border-left: 1px solid rgba(90, 74, 48, 0.35); white-space: nowrap;
+      }
+      #title small { font-size: 12px; letter-spacing: 1px; color: var(--ink-soft); font-weight: 400; }
+      #top-spacer { flex: 1; min-width: 0; }
+      #wave-box, #mantou-box { white-space: nowrap; font-size: 17px; color: var(--ink-soft); }
+      #wave-box b, #mantou-box b { color: var(--gold); font-size: 20px; }
+      #btn-summon { white-space: nowrap; flex-shrink: 0; }
+
+      /* ===== 状态条 ===== */
+      #hud-status {
+        position: fixed; left: 50%; top: 82px; transform: translateX(-50%);
+        z-index: 10; padding: 4px 16px; border-radius: 4px; pointer-events: none;
+        font: 600 15px/1.4 "STKaiti", "KaiTi", serif; color: #ffe9a8;
+        background: rgba(28, 22, 14, 0.6); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      }
+      #hud-status:empty { display: none; }
+
+      /* ===== 召唤栏 ===== */
+      #controls {
+        position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom));
+        transform: translateX(-50%); z-index: 10;
+        display: flex; flex-direction: column; align-items: center; gap: 8px; user-select: none;
+        max-width: 96vw;
+      }
+      #summon-bar {
+        display: flex; gap: 8px; min-height: 58px; padding: 6px 10px;
+        min-width: 300px; justify-content: center; align-items: center; touch-action: none;
+      }
+      #summon-bar:empty::after {
+        content: "召唤结果栏：点击选中或拖到棋盘"; font-size: 14px; color: #9d917a;
+        font-family: "STKaiti", "KaiTi", serif;
+      }
+      #summon-bar .slot {
+        width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+        font: 700 24px/1 "STKaiti", "KaiTi", serif; color: #2a2318;
+        background: linear-gradient(#f6efdd, #e2d5b7);
+        border: 2px solid var(--paper-edge); border-radius: 6px; cursor: grab; touch-action: none;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+      #summon-bar .slot:active { cursor: grabbing; }
+      #summon-bar .slot.selected {
+        border-color: #b8891e;
+        box-shadow: 0 0 0 2px rgba(184, 137, 30, 0.75), 0 0 14px rgba(184, 137, 30, 0.7);
+        transform: translateY(-2px);
+      }
+
+      /* ===== 武将收集面板 ===== */
+      #general-panel {
+        position: fixed; right: 14px; top: 86px; z-index: 10;
+        width: 176px; padding: 10px 10px 12px; user-select: none;
+      }
+      #general-panel h3 {
+        font-size: 17px; text-align: center; color: var(--gold); font-weight: 700;
+        letter-spacing: 2px; padding-bottom: 6px; margin-bottom: 6px;
+        border-bottom: 1px dashed rgba(90, 74, 48, 0.4);
+      }
+      #general-list { display: flex; flex-direction: column; gap: 4px; }
+      #general-list .gen-row {
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 15px; padding: 2px 6px; border-radius: 4px; color: var(--ink-soft);
+      }
+      #general-list .gen-row .gen-name { font-weight: 700; }
+      #general-list .gen-row .gen-prog { font-size: 13px; color: #8a7f68; }
+      #general-list .gen-row.active { background: rgba(168, 50, 38, 0.12); }
+      #general-list .gen-row.active .gen-prog { color: var(--seal); font-weight: 700; }
+
+      /* ===== 垃圾桶 ===== */
+      #trash-bin {
+        position: fixed; right: 24px; bottom: 120px; z-index: 10;
+        width: 92px; height: 92px; display: flex; align-items: center; justify-content: center;
+        font: 700 17px/1 "STKaiti", "KaiTi", serif; color: var(--ink-soft);
+        background: rgba(238, 229, 208, 0.9); border: 2px dashed rgba(90, 74, 48, 0.55);
+        border-radius: 10px; pointer-events: none; user-select: none;
+        transition: transform .12s, background .12s, border-color .12s, color .12s;
+      }
+      #trash-bin.hot {
+        color: #fff0ea; background: rgba(168, 50, 38, 0.95); border-color: #e0705c;
+        transform: scale(1.08);
+      }
+
+      /* ===== GM 面板 ===== */
+      #gm-panel {
+        position: fixed; left: 14px; bottom: 16px; z-index: 15;
+        width: 210px; padding: 8px; user-select: none; opacity: 0.94;
+      }
+      #gm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+      #gm-head span { font-size: 15px; font-weight: 700; color: var(--seal); letter-spacing: 1px; }
+      #gm-toggle { font-size: 12px; padding: 3px 8px; }
+      #gm-body { display: flex; flex-wrap: wrap; gap: 5px; }
+      #gm-body.collapsed { display: none; }
+      #gm-body .ink-btn { font-size: 12px; padding: 5px 8px; }
+      #gm-generals { display: flex; flex-wrap: wrap; gap: 5px; width: 100%; margin-top: 2px; }
+      #gm-generals .ink-btn { font-size: 12px; padding: 4px 7px; }
+      #hud-fps {
+        width: 100%; margin-top: 4px; text-align: right;
+        font-size: 12px; color: var(--ink-soft);
+      }
+
+      /* ===== 结束面板 ===== */
+      #game-over {
+        position: fixed; inset: 0; z-index: 20; display: none;
+        flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+        background: rgba(10, 8, 5, 0.78); user-select: none;
+      }
+      #game-over.show { display: flex; }
+      #game-over-text {
+        font: 700 46px/1.3 "STKaiti", "KaiTi", serif; letter-spacing: 4px;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+      }
+      #btn-restart { font-size: 18px; padding: 12px 34px; }
+
+      /* ===================== 移动端 / 窄屏自适应 ===================== */
+      @media (max-width: 900px) {
+        #top-bar {
+          height: 48px; gap: 8px; padding: 0 8px;
+        }
+        #hp-bar { max-width: 34vw; height: 24px; }
+        #hp-bar .heart { font-size: 12px; }
+        #hp-label { font-size: 12px; margin-left: 2px; }
+        #title { font-size: 17px; letter-spacing: 1px; }
+        #title small { display: none; }
+        #wave-box, #mantou-box { font-size: 13px; }
+        #wave-box b, #mantou-box b { font-size: 15px; }
+
+        #hud-status { top: calc(60px + env(safe-area-inset-top)); font-size: 13px; padding: 3px 10px; }
+
+        /* 武将面板收窄，避免遮挡棋盘 */
+        #general-panel {
+          right: 8px; top: calc(64px + env(safe-area-inset-top));
+          width: 118px; padding: 6px;
+        }
+        #general-panel h3 { font-size: 13px; padding-bottom: 4px; margin-bottom: 4px; }
+        #general-list .gen-row { font-size: 12px; padding: 1px 4px; }
+        #general-list .gen-row .gen-prog { font-size: 11px; }
+
+        /* 召唤栏：横向可滚动，格子缩小 */
+        #summon-bar {
+          min-width: 0; max-width: 94vw; padding: 5px 8px; gap: 6px;
+          overflow-x: auto; justify-content: flex-start;
+          -webkit-overflow-scrolling: touch;
+        }
+        #summon-bar .slot { width: 44px; height: 44px; font-size: 20px; flex: 0 0 auto; }
+        #btn-summon { font-size: 14px; padding: 9px 18px; }
+
+        #trash-bin {
+          width: 62px; height: 62px; font-size: 13px; right: 8px;
+          bottom: calc(78px + env(safe-area-inset-bottom));
+        }
+
+        /* GM 面板移到左侧中部并默认收起，避让底部召唤栏 */
+        #gm-panel {
+          top: 50%; left: 6px; bottom: auto;
+          transform: translateY(-50%) scale(0.92); transform-origin: left center;
+          width: 150px; padding: 6px;
+        }
+        #gm-head span { font-size: 13px; }
+      }
+
+      /* 横屏手机（高度很矮）：进一步压缩顶栏 */
+      @media (max-height: 460px) {
+        #top-bar { height: 40px; }
+        #hud-status { top: calc(50px + env(safe-area-inset-top)); }
+        #general-panel { top: calc(52px + env(safe-area-inset-top)); max-height: 46vh; overflow-y: auto; }
+        #game-over-text { font-size: 32px; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="app"></canvas>
+
+    <div id="top-bar" class="ink-panel">
+      <div id="hp-bar"></div>
+      <div id="hp-label">阿斗</div>
+      <div id="title">赵云与阿斗<br /><small>H5 · M10 移动端适配</small></div>
+      <div id="top-spacer"></div>
+      <div id="wave-box">波次 <b id="hud-wave">0</b></div>
+      <div id="mantou-box">馒头 <b id="hud-mantou">50</b></div>
+    </div>
+
+    <div id="hud-status"></div>
+
+    <div id="general-panel" class="ink-panel">
+      <h3>武将收集</h3>
+      <div id="general-list"></div>
+    </div>
+
+    <div id="controls">
+      <div id="summon-bar" class="ink-panel"></div>
+      <button id="btn-summon" class="ink-btn">召唤（<span id="hud-cost">10</span>）馒头</button>
+    </div>
+
+    <div id="trash-bin">垃圾桶</div>
+
+    <div id="gm-panel" class="ink-panel">
+      <div id="gm-head"><span>GM 调试</span><button id="gm-toggle" class="ink-btn ghost">收起</button></div>
+      <div id="gm-body">
+        <button class="ink-btn" data-gm="unlock">全开格</button>
+        <button class="ink-btn" data-gm="wave">立即出怪</button>
+        <button class="ink-btn" data-gm="mantou">+100 馒头</button>
+        <button class="ink-btn" data-gm="damage">阿斗 -5</button>
+        <button class="ink-btn" data-gm="victory">强制胜利</button>
+        <div id="gm-generals"></div>
+        <div id="hud-fps">FPS: --</div>
+      </div>
+    </div>
+
+    <div id="game-over">
+      <div id="game-over-text"></div>
+      <button id="btn-restart" class="ink-btn">再战一场</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
