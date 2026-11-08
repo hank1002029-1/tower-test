@@ -194,6 +194,10 @@
       #gm-toggle { font-size: 12px; padding: 3px 8px; }
       #gm-body { display: flex; flex-wrap: wrap; gap: 5px; }
       #gm-body.collapsed { display: none; }
+      /* 收起态：整块精简成一个 "GM" 小标签，只有标题栏 */
+      #gm-panel.collapsed { width: auto; padding: 5px 10px; }
+      #gm-panel.collapsed #gm-head { margin-bottom: 0; cursor: pointer; justify-content: center; }
+      #gm-panel.collapsed #gm-toggle { display: none; }
       #gm-body .ink-btn { font-size: 12px; padding: 5px 8px; }
       #gm-generals { display: flex; flex-wrap: wrap; gap: 5px; width: 100%; margin-top: 2px; }
       #gm-generals .ink-btn { font-size: 12px; padding: 4px 7px; }
@@ -312,7 +316,7 @@
     <div id="trash-bin">垃圾桶</div>
 
     <div id="gm-panel" class="ink-panel">
-      <div id="gm-head"><span>GM 调试</span><button id="gm-toggle" class="ink-btn ghost">收起</button></div>
+      <div id="gm-head"><span id="gm-title">GM 调试</span><button id="gm-toggle" class="ink-btn ghost">收起</button></div>
       <div id="gm-body">
         <button class="ink-btn" data-gm="unlock">全开格</button>
         <button class="ink-btn" data-gm="wave">立即出怪</button>

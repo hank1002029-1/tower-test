@@ -41,6 +41,7 @@ export class Hud {
   private readonly gmBodyEl = document.getElementById("gm-body")!;
   private readonly gmPanelEl = document.getElementById("gm-panel")!;
   private readonly gmHeadEl = document.getElementById("gm-head")!;
+  private readonly gmTitleEl = document.getElementById("gm-title")!;
   private readonly gmToggleBtn = document.getElementById("gm-toggle") as HTMLButtonElement;
   private readonly howToEl = document.getElementById("how-to")!;
   private readonly howToHeadEl = document.getElementById("how-to-head")!;
@@ -184,12 +185,19 @@ export class Hud {
       genWrap.appendChild(btn);
     }
 
-    this.gmToggleBtn.addEventListener("click", () => {
-      const collapsed = this.gmBodyEl.classList.toggle("collapsed");
-      this.gmToggleBtn.textContent = collapsed ? "展开" : "收起";
-    });
+    this.gmToggleBtn.addEventListener("click", () => this.setGmCollapsed(true));
 
-    this.makeDraggable(this.gmPanelEl, this.gmHeadEl);
+    // 标题栏：轻点切换收起/展开，按住拖动移动面板（位移超过阈值才算拖拽）
+    this.makeDraggable(this.gmPanelEl, this.gmHeadEl, () =>
+      this.setGmCollapsed(!this.gmPanelEl.classList.contains("collapsed"))
+    );
+  }
+
+  /** 收起时整块只留一个 "GM" 小标签；展开时恢复完整标题与按钮。 */
+  private setGmCollapsed(collapsed: boolean): void {
+    this.gmPanelEl.classList.toggle("collapsed", collapsed);
+    this.gmBodyEl.classList.toggle("collapsed", collapsed);
+    this.gmTitleEl.textContent = collapsed ? "GM" : "GM 调试";
   }
 
   /**
@@ -207,9 +215,17 @@ export class Hud {
    * 让 GM 面板可通过标题栏拖拽移动（鼠标 / 触摸通用）。
    * 拖动时把定位从 CSS 的 left/top 固定下来，避免与后续计算叠加；
    * 并把面板限制在视口内，防止拖出屏幕找不回来。
+   * 位移小于阈值的按下-抬起视为「轻点」，触发 onTap（用于收起/展开）。
    */
-  private makeDraggable(panel: HTMLElement, handle: HTMLElement): void {
+  private makeDraggable(
+    panel: HTMLElement,
+    handle: HTMLElement,
+    onTap?: () => void
+  ): void {
+    /** 判定轻点的位移阈值（px）。 */
+    const TAP_THRESHOLD = 5;
     let dragging = false;
+    let moved = false;
     let startX = 0;
     let startY = 0;
     let startLeft = 0;
@@ -226,6 +242,7 @@ export class Hud {
       startLeft = rect.left;
       startTop = rect.top;
       dragging = true;
+      moved = false;
       handle.classList.add("dragging");
       handle.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -233,10 +250,13 @@ export class Hud {
 
     const onMove = (e: PointerEvent): void => {
       if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.hypot(dx, dy) > TAP_THRESHOLD) moved = true;
       const maxX = Math.max(0, window.innerWidth - panel.offsetWidth);
       const maxY = Math.max(0, window.innerHeight - panel.offsetHeight);
-      const x = Math.min(Math.max(0, startLeft + (e.clientX - startX)), maxX);
-      const y = Math.min(Math.max(0, startTop + (e.clientY - startY)), maxY);
+      const x = Math.min(Math.max(0, startLeft + dx), maxX);
+      const y = Math.min(Math.max(0, startTop + dy), maxY);
       panel.style.left = `${x}px`;
       panel.style.top = `${y}px`;
     };
@@ -246,11 +266,19 @@ export class Hud {
       dragging = false;
       handle.classList.remove("dragging");
       handle.releasePointerCapture?.(e.pointerId);
+      if (!moved) onTap?.();
+    };
+
+    const onCancel = (e: PointerEvent): void => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove("dragging");
+      handle.releasePointerCapture?.(e.pointerId);
     };
 
     handle.addEventListener("pointerdown", onDown);
     handle.addEventListener("pointermove", onMove);
     handle.addEventListener("pointerup", onUp);
-    handle.addEventListener("pointercancel", onUp);
+    handle.addEventListener("pointercancel", onCancel);
   }
 }
